@@ -98,6 +98,15 @@ const authStatus = document.getElementById("auth-status");
 const loginBtn = document.getElementById("login-btn");
 const logoutBtn = document.getElementById("logout-btn");
 const authGate = document.getElementById("auth-gate");
+const levelSelect = document.getElementById("level-select");
+const selectPrimary = document.getElementById("select-primary");
+const selectSecondary = document.getElementById("select-secondary");
+const heroEyebrow = document.getElementById("hero-eyebrow");
+const heroTitle = document.getElementById("hero-title");
+const heroSubtitle = document.getElementById("hero-subtitle");
+const heroProfesor = document.getElementById("hero-profesor");
+const profesorInput = form.querySelector("input[name='profesor']");
+const asignaturaInput = form.querySelector("input[name='asignatura']");
 
 const extrasState = new Map();
 
@@ -127,11 +136,34 @@ const sanitizeText = (value) =>
 const responsableNombreInput = form.querySelector("input[name='responsableNombre']");
 const responsableFirmaInput = form.querySelector("input[name='responsableFirma']");
 const firmaAlumnoInput = form.querySelector("input[name='firmaAlumno']");
+const body = document.body;
 
 const syncInitials = () => {
   const responsableIniciales = getInitials(responsableNombreInput.value);
   responsableFirmaInput.value = responsableIniciales;
   firmaAlumnoInput.value = responsableIniciales;
+};
+
+const applyLevel = (level) => {
+  if (level === "secondary") {
+    body.classList.add("theme-secondary");
+    body.classList.remove("theme-primary");
+    heroEyebrow.textContent = "PROGRAMACION";
+    heroTitle.textContent = "📋 Formato de prestamo de kit de trabajo - Secundaria";
+    heroSubtitle.textContent = "Registro dinamico para practicas de tecnologia en secundaria.";
+    heroProfesor.textContent = "Profesor: Saul Francisco Alejandre Cuevas";
+    profesorInput.value = "Saul Francisco Alejandre Cuevas";
+    asignaturaInput.value = "Programación";
+  } else {
+    body.classList.add("theme-primary");
+    body.classList.remove("theme-secondary");
+    heroEyebrow.textContent = "TECNOLOGíAs 💻";
+    heroTitle.textContent = "📋 Formato unico de prestamo de kit de trabajo";
+    heroSubtitle.textContent = "Registro dinamico y didactico para practicas de tecnologia.";
+    heroProfesor.textContent = "Profesor: Luis Alfonso Martinez Alfaro";
+    profesorInput.value = "Luis Alfonso Martinez Alfaro";
+    asignaturaInput.value = "";
+  }
 };
 
 const setAuthUi = (user) => {
@@ -141,6 +173,8 @@ const setAuthUi = (user) => {
     logoutBtn.disabled = true;
     authGate.classList.remove("hidden");
     form.classList.add("hidden");
+    levelSelect.classList.add("hidden");
+    applyLevel("primary");
     return;
   }
 
@@ -148,7 +182,8 @@ const setAuthUi = (user) => {
   loginBtn.disabled = true;
   logoutBtn.disabled = false;
   authGate.classList.add("hidden");
-  form.classList.remove("hidden");
+  levelSelect.classList.remove("hidden");
+  form.classList.add("hidden");
 };
 
 loginBtn.addEventListener("click", async () => {
@@ -368,6 +403,18 @@ renderBaseMaterials();
 renderExtraOptions();
 updateMaterialCount();
 syncInitials();
+applyLevel("primary");
 setAuthUi(null);
 
 responsableNombreInput.addEventListener("input", syncInitials);
+selectPrimary.addEventListener("click", () => {
+  applyLevel("primary");
+  levelSelect.classList.add("hidden");
+  form.classList.remove("hidden");
+});
+
+selectSecondary.addEventListener("click", () => {
+  applyLevel("secondary");
+  levelSelect.classList.add("hidden");
+  form.classList.remove("hidden");
+});

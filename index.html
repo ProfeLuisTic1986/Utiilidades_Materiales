@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body class="theme-primary">
     <header class="hero">
       <div class="hero__banner">
         <img
@@ -23,15 +23,22 @@
       </div>
       <div class="hero__content">
         <div>
-          <p class="hero__eyebrow">TECNOLOGíAs 💻</p>
-          <h1>📋 Formato unico de prestamo de kit de trabajo</h1>
-          <p class="hero__subtitle">
+          <p class="hero__eyebrow" id="hero-eyebrow">TECNOLOGíAs 💻</p>
+          <h1 id="hero-title">📋 Formato unico de prestamo de kit de trabajo</h1>
+          <p class="hero__subtitle" id="hero-subtitle">
             Registro dinamico y didactico para practicas de tecnologia.
           </p>
+          <div class="secondary-logo" aria-hidden="true">
+            <img src="logo.png" alt="" class="secondary-logo__image" />
+            <div>
+              <span>Secundaria</span>
+              <strong>Programación</strong>
+            </div>
+          </div>
         </div>
         <div class="hero__badge">
           <p>Una hoja por equipo</p>
-          <span>Profesor: Luis Alfonso Martinez Alfaro</span>
+          <span id="hero-profesor">Profesor: Luis Alfonso Martinez Alfaro</span>
         </div>
         <div class="auth-bar">
           <span id="auth-status">No has iniciado sesion</span>
@@ -49,6 +56,26 @@
           <h2>Ingresa con tu cuenta escolar</h2>
           <p>Accede con tu correo @isb.edu.mx para registrar materiales.</p>
           <button type="button" id="login-btn">Entrar con Google</button>
+        </div>
+      </section>
+
+      <section id="level-select" class="level-select hidden">
+        <h2>Elige tu seccion</h2>
+        <div class="level-grid">
+          <button type="button" class="level-card" id="select-primary">
+            <img src="PrimariaTECNOLOGIA.jpg" alt="PrimariaTECNOLOGIA" />
+            <strong>Primaria</strong>
+            <span>Formato con colores rojo y blanco</span>
+          </button>
+          <button type="button" class="level-card level-card--secondary" id="select-secondary">
+            <div class="level-card__logo">
+              <img src="logo.png" alt="Secundaria Programación" />
+              <span>Secundaria</span>
+              <strong>Programación</strong>
+            </div>
+            <strong>Secundaria</strong>
+            <span>Formato con colores azul y blanco</span>
+          </button>
         </div>
       </section>
 
@@ -233,6 +260,11 @@
         <p id="form-message" class="form-message" role="status"></p>
       </form>
     </main>
+
+    <footer class="site-footer">
+      Sitio web desarrollado por el profesor Luis Alfonso Martinez Alfaro
+      lmartinez@isb.edu.mx
+    </footer>
 
     <script type="module" src="app.js"></script>
   </body>
