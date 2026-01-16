@@ -10,8 +10,6 @@ import {
   GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
-  getRedirectResult,
-  signInWithRedirect,
   signOut,
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
@@ -156,19 +154,13 @@ const setAuthUi = (user) => {
 loginBtn.addEventListener("click", async () => {
   message.textContent = "";
   try {
-    const host = window.location.hostname;
-    const isLocal = host === "localhost" || host === "127.0.0.1";
-    if (isLocal) {
-      const result = await signInWithPopup(auth, provider);
-      const email = result.user?.email || "";
-      if (!email.endsWith(`@${allowedDomain}`)) {
-        await signOut(auth);
-        message.textContent = `Solo se permite correo @${allowedDomain}.`;
-        message.className = "form-message error";
-      }
-      return;
+    const result = await signInWithPopup(auth, provider);
+    const email = result.user?.email || "";
+    if (!email.endsWith(`@${allowedDomain}`)) {
+      await signOut(auth);
+      message.textContent = `Solo se permite correo @${allowedDomain}.`;
+      message.className = "form-message error";
     }
-    await signInWithRedirect(auth, provider);
   } catch (error) {
     message.textContent = "No se pudo iniciar sesion.";
     message.className = "form-message error";
@@ -190,22 +182,6 @@ onAuthStateChanged(auth, (user) => {
   }
   setAuthUi(user);
 });
-
-getRedirectResult(auth)
-  .then((result) => {
-    const email = result?.user?.email || "";
-    if (email && !email.endsWith(`@${allowedDomain}`)) {
-      signOut(auth);
-      message.textContent = `Solo se permite correo @${allowedDomain}.`;
-      message.className = "form-message error";
-    }
-  })
-  .catch((error) => {
-    if (!error) return;
-    message.textContent = "No se pudo iniciar sesion.";
-    message.className = "form-message error";
-    console.error(error);
-  });
 
 const updateMaterialCount = () => {
   const baseSelected = [...baseContainer.querySelectorAll("input[type='checkbox']")].filter(
