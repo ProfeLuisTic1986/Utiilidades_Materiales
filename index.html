@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Primaria TECNOLOGIA - Registro de Materiales</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="hero">
+      <div class="hero__banner">
+        <img
+          src="PrimariaTECNOLOGIA.jpg"
+          alt="PrimariaTECNOLOGIA"
+          class="hero__banner-image"
+        />
+      </div>
+      <div class="hero__content">
+        <div>
+          <p class="hero__eyebrow">TECNOLOGíAs 💻</p>
+          <h1>📋 Formato unico de prestamo de kit de trabajo</h1>
+          <p class="hero__subtitle">
+            Registro dinamico y didactico para practicas de tecnologia.
+          </p>
+        </div>
+        <div class="hero__badge">
+          <p>Una hoja por equipo</p>
+          <span>Profesor: Luis Alfonso Martinez Alfaro</span>
+        </div>
+        <div class="auth-bar">
+          <span id="auth-status">No has iniciado sesion</span>
+          <div class="auth-actions">
+            <button type="button" id="logout-btn" class="ghost">Salir</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section id="auth-gate" class="auth-gate">
+        <div class="auth-card">
+          <img src="PrimariaTECNOLOGIA.jpg" alt="PrimariaTECNOLOGIA" />
+          <h2>Ingresa con tu cuenta escolar</h2>
+          <p>Accede con tu correo @isb.edu.mx para registrar materiales.</p>
+          <button type="button" id="login-btn">Entrar con Google</button>
+        </div>
+      </section>
+
+      <form id="prestamo-form" class="sheet hidden">
+        <section class="card reveal" style="animation-delay: 0.05s">
+          <h2>Datos generales</h2>
+          <div class="grid">
+            <label>
+              Asignatura / Area
+              <input type="text" name="asignatura" required />
+            </label>
+            <label>
+              Proyecto / Practica
+              <input type="text" name="proyecto" required />
+            </label>
+            <label>
+              Fecha
+              <input type="date" name="fecha" required />
+            </label>
+            <label>
+              Grupo
+              <input type="text" name="grupo" required />
+            </label>
+            <label class="span-2">
+              Profesor
+              <input
+                type="text"
+                name="profesor"
+                value="Luis Alfonso Martinez Alfaro"
+                required
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="card reveal" style="animation-delay: 0.1s">
+          <h2>1. Datos del equipo</h2>
+          <div class="grid">
+            <label>
+              Numero de mesa
+              <input type="text" name="mesa" required />
+            </label>
+            <label>
+              Numero / ID del kit
+              <input type="text" name="kitId" required />
+            </label>
+            <label class="span-2">
+              Integrantes del equipo
+              <textarea
+                name="integrantes"
+                rows="4"
+                placeholder="Escribe los nombres separados por comas"
+                required
+              ></textarea>
+            </label>
+          </div>
+          <div class="grid">
+            <label>
+              Alumno responsable (nombre)
+              <input type="text" name="responsableNombre" required />
+            </label>
+            <label>
+              Firma del alumno responsable (iniciales)
+              <input
+                type="text"
+                name="responsableFirma"
+                placeholder="Se genera automaticamente"
+                readonly
+              />
+            </label>
+          </div>
+        </section>
+
+        <section class="card reveal" style="animation-delay: 0.15s">
+          <div class="card__title">
+            <h2>2. Material entregado y utilizado</h2>
+            <div class="material-counter">
+              <span id="material-count">0</span> seleccionados
+            </div>
+          </div>
+          <p class="helper">
+            Marca los materiales usados y escribe la cantidad. Puedes agregar
+            extras desde la lista desplegable.
+          </p>
+          <div id="base-materials" class="materials-grid"></div>
+
+          <div class="extras">
+            <div>
+              <h3>Material adicional (agregar varios)</h3>
+              <div class="extras__controls">
+                <select id="extra-select">
+                  <option value="">Selecciona un material...</option>
+                </select>
+                <button type="button" id="add-extra">Agregar</button>
+              </div>
+              <div class="extras__controls">
+                <input
+                  id="extra-custom"
+                  type="text"
+                  placeholder="Otro material..."
+                />
+                <button type="button" id="add-custom">Agregar otro</button>
+              </div>
+            </div>
+            <div>
+              <h3>Seleccionados</h3>
+              <div id="extras-list" class="extras-list"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card reveal" style="animation-delay: 0.2s">
+          <h2>3. Estado del material</h2>
+          <div class="grid">
+            <fieldset>
+              <legend>Al recibir el kit</legend>
+              <label class="inline">
+                <input type="radio" name="recibirEstado" value="Completo" />
+                Completo
+              </label>
+              <label class="inline">
+                <input type="radio" name="recibirEstado" value="Incompleto" />
+                Incompleto
+              </label>
+              <label class="inline">
+                <input type="radio" name="recibirEstado" value="Observaciones" />
+                Observaciones
+              </label>
+              <textarea
+                name="recibirObservaciones"
+                rows="3"
+                placeholder="Observaciones al recibir"
+              ></textarea>
+            </fieldset>
+            <fieldset>
+              <legend>Al devolver el kit</legend>
+              <label class="inline">
+                <input type="radio" name="devolverEstado" value="Completo" />
+                Completo
+              </label>
+              <label class="inline">
+                <input type="radio" name="devolverEstado" value="Incompleto" />
+                Incompleto
+              </label>
+              <label class="inline">
+                <input type="radio" name="devolverEstado" value="Danado" />
+                Danado
+              </label>
+              <textarea
+                name="devolverObservaciones"
+                rows="3"
+                placeholder="Observaciones al devolver"
+              ></textarea>
+            </fieldset>
+          </div>
+          <label>
+            Observaciones finales
+            <textarea name="observacionesFinales" rows="3"></textarea>
+          </label>
+        </section>
+
+        <section class="card reveal" style="animation-delay: 0.25s">
+          <h2>4. Compromiso de responsabilidad</h2>
+          <p class="commitment">
+            Declaro que el equipo recibio el material indicado y se compromete a
+            cuidarlo y devolverlo completo y en buen estado. En caso de dano o
+            extravio por mal uso, se aceptan las medidas correspondientes
+            indicadas por el profesor.
+          </p>
+          <div class="grid">
+            <label>
+              Firma del alumno responsable (iniciales)
+              <input type="text" name="firmaAlumno" readonly />
+            </label>
+          </div>
+        </section>
+
+        <div class="actions">
+          <button type="submit">Registrar prestamo</button>
+          <button type="reset" class="ghost">Limpiar formulario</button>
+        </div>
+        <p id="form-message" class="form-message" role="status"></p>
+      </form>
+    </main>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
