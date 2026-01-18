@@ -260,7 +260,7 @@ body.theme-secondary .secondary-logo {
   border-radius: 22px;
   border: 2px solid #f0bcbc;
   padding: 20px;
-  text-align: left;
+  text-align: center;
   display: grid;
   gap: 10px;
   align-items: center;
@@ -277,6 +277,12 @@ body.theme-secondary .secondary-logo {
   width: 100%;
   max-height: 120px;
   object-fit: contain;
+}
+
+.level-card strong {
+  display: block;
+  font-size: 1.1rem;
+  color: var(--brand-dark);
 }
 
 .level-card span {
@@ -511,6 +517,41 @@ button:hover {
 .form-message {
   margin-top: 16px;
   font-weight: 700;
+}
+
+.folio-panel {
+  margin-top: 18px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  border: 2px dashed rgba(0, 0, 0, 0.08);
+}
+
+.folio-panel h3 {
+  margin: 0 0 10px;
+  font-family: "Baloo 2", "Trebuchet MS", cursive;
+  color: var(--brand-dark);
+}
+
+.folio-panel__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.folio-panel__row span {
+  font-weight: 800;
+  color: var(--brand-dark);
+  background: var(--paper);
+  padding: 6px 12px;
+  border-radius: 999px;
+}
+
+.folio-panel__note {
+  margin: 10px 0 12px;
+  color: var(--muted);
+  font-weight: 600;
 }
 
 .site-footer {

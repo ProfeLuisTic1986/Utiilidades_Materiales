@@ -252,6 +252,26 @@
           <button type="reset" class="ghost">Limpiar formulario</button>
         </div>
         <p id="form-message" class="form-message" role="status"></p>
+        <section id="folio-panel" class="folio-panel hidden">
+          <h3>Folio del registro</h3>
+          <div class="folio-panel__row">
+            <span id="folio-value">-</span>
+            <button type="button" id="copy-folio" class="ghost">Copiar folio</button>
+          </div>
+          <p class="folio-panel__note">
+            Puedes editar o reutilizar solo si este folio fue creado con tu
+            correo.
+          </p>
+          <div class="folio-panel__row">
+            <input
+              type="text"
+              id="folio-input"
+              placeholder="Escribe el folio para editar o reutilizar"
+            />
+            <button type="button" id="edit-folio">Editar</button>
+            <button type="button" id="reuse-folio" class="ghost">Reutilizar</button>
+          </div>
+        </section>
       </form>
     </main>
 

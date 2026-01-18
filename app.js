@@ -2,8 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebas
 import {
   addDoc,
   collection,
+  doc,
   getFirestore,
+  getDocs,
+  limit,
+  query,
   serverTimestamp,
+  updateDoc,
+  where,
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 import {
   getAuth,
@@ -106,9 +112,19 @@ const heroTitle = document.getElementById("hero-title");
 const heroSubtitle = document.getElementById("hero-subtitle");
 const heroProfesor = document.getElementById("hero-profesor");
 const profesorInput = form.querySelector("input[name='profesor']");
+const folioPanel = document.getElementById("folio-panel");
+const folioValue = document.getElementById("folio-value");
+const folioInput = document.getElementById("folio-input");
+const copyFolioButton = document.getElementById("copy-folio");
+const editFolioButton = document.getElementById("edit-folio");
+const reuseFolioButton = document.getElementById("reuse-folio");
 const asignaturaInput = form.querySelector("input[name='asignatura']");
 
 const extrasState = new Map();
+let currentLevel = "primary";
+let editMode = false;
+let currentDocId = null;
+let currentFolio = null;
 
 const toKey = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
@@ -133,6 +149,26 @@ const sanitizeText = (value) =>
     .replace(/[\u0000-\u001F\u007F]/g, "")
     .trim();
 
+const generateFolio = () => {
+  const stamp = Date.now().toString(36).toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
+  return `F-${stamp}-${rand}`;
+};
+
+const setFolioPanel = (folio) => {
+  if (!folio) {
+    folioPanel.classList.add("hidden");
+    folioValue.textContent = "-";
+    folioInput.value = "";
+    currentFolio = null;
+    return;
+  }
+  folioPanel.classList.remove("hidden");
+  folioValue.textContent = folio;
+  folioInput.value = folio;
+  currentFolio = folio;
+};
+
 const responsableNombreInput = form.querySelector("input[name='responsableNombre']");
 const responsableFirmaInput = form.querySelector("input[name='responsableFirma']");
 const firmaAlumnoInput = form.querySelector("input[name='firmaAlumno']");
@@ -145,6 +181,7 @@ const syncInitials = () => {
 };
 
 const applyLevel = (level) => {
+  currentLevel = level === "secondary" ? "secondary" : "primary";
   if (level === "secondary") {
     body.classList.add("theme-secondary");
     body.classList.remove("theme-primary");
@@ -174,6 +211,9 @@ const setAuthUi = (user) => {
     authGate.classList.remove("hidden");
     form.classList.add("hidden");
     levelSelect.classList.add("hidden");
+    setFolioPanel(null);
+    editMode = false;
+    currentDocId = null;
     applyLevel("primary");
     return;
   }
@@ -184,6 +224,9 @@ const setAuthUi = (user) => {
   authGate.classList.add("hidden");
   levelSelect.classList.remove("hidden");
   form.classList.add("hidden");
+  setFolioPanel(null);
+  editMode = false;
+  currentDocId = null;
 };
 
 loginBtn.addEventListener("click", async () => {
@@ -294,6 +337,134 @@ const addExtra = (value) => {
   }
 };
 
+const fillForm = (data) => {
+  form.reset();
+
+  form.querySelectorAll("input[type='checkbox']").forEach((input) => {
+    input.checked = false;
+  });
+  form.querySelectorAll("input[type='number']").forEach((input) => {
+    input.value = "1";
+  });
+  form.querySelectorAll("input[type='radio']").forEach((input) => {
+    input.checked = false;
+  });
+
+  form.querySelector("input[name='asignatura']").value = data.asignatura || "";
+  form.querySelector("input[name='proyecto']").value = data.proyecto || "";
+  form.querySelector("input[name='fecha']").value = data.fecha || "";
+  form.querySelector("input[name='grupo']").value = data.grupo || "";
+  profesorInput.value = data.profesor || profesorInput.value;
+  form.querySelector("input[name='mesa']").value = data.mesa || "";
+  form.querySelector("input[name='kitId']").value = data.kitId || "";
+  form.querySelector("textarea[name='integrantes']").value = data.integrantes || "";
+  responsableNombreInput.value = data.responsable?.nombre || "";
+  syncInitials();
+
+  form.querySelector("textarea[name='recibirObservaciones']").value =
+    data.estado?.recibirObservaciones || "";
+  form.querySelector("textarea[name='devolverObservaciones']").value =
+    data.estado?.devolverObservaciones || "";
+  form.querySelector("textarea[name='observacionesFinales']").value =
+    data.observacionesFinales || "";
+
+  if (data.estado?.recibir) {
+    const recibirInput = form.querySelector(
+      `input[name='recibirEstado'][value='${data.estado.recibir}']`
+    );
+    if (recibirInput) recibirInput.checked = true;
+  }
+
+  if (data.estado?.devolver) {
+    const devolverInput = form.querySelector(
+      `input[name='devolverEstado'][value='${data.estado.devolver}']`
+    );
+    if (devolverInput) devolverInput.checked = true;
+  }
+
+  const baseMap = new Map(
+    (data.materiales?.base || []).map((item) => [item.material, item.cantidad])
+  );
+  baseMaterials.forEach((material) => {
+    const key = toKey(material);
+    const checkbox = form.querySelector(`input[name='base-${key}']`);
+    const qtyInput = form.querySelector(`input[name='qty-${key}']`);
+    if (!checkbox || !qtyInput) return;
+    if (baseMap.has(material)) {
+      checkbox.checked = true;
+      qtyInput.value = String(baseMap.get(material) || 1);
+    }
+  });
+
+  extrasState.clear();
+  (data.materiales?.extras || []).forEach((item) => {
+    const name = sanitizeText(item.material);
+    if (name) {
+      extrasState.set(name, Number(item.cantidad) || 1);
+    }
+  });
+  renderExtras();
+  updateMaterialCount();
+};
+
+const fetchByFolio = async (folio) => {
+  const queryRef = query(
+    collection(db, "prestamos"),
+    where("folio", "==", folio),
+    limit(1)
+  );
+  const snapshot = await getDocs(queryRef);
+  if (snapshot.empty) return null;
+  const docSnap = snapshot.docs[0];
+  return { id: docSnap.id, data: docSnap.data() };
+};
+
+const loadByFolio = async (folio, mode) => {
+  const cleaned = sanitizeText(folio).toUpperCase();
+  if (!cleaned) {
+    message.textContent = "Escribe un folio valido.";
+    message.className = "form-message error";
+    return;
+  }
+  if (!auth.currentUser) {
+    message.textContent = "Inicia sesion para editar o reutilizar.";
+    message.className = "form-message error";
+    return;
+  }
+  const result = await fetchByFolio(cleaned);
+  if (!result) {
+    message.textContent = "No se encontro un registro con ese folio.";
+    message.className = "form-message error";
+    return;
+  }
+  const owner = (result.data.createdByEmail || "").toLowerCase();
+  const current = (auth.currentUser.email || "").toLowerCase();
+  if (owner && owner !== current) {
+    message.textContent = "Este folio pertenece a otro correo.";
+    message.className = "form-message error";
+    return;
+  }
+
+  if (result.data.seccion) {
+    applyLevel(result.data.seccion);
+  }
+  fillForm(result.data);
+
+  if (mode === "edit") {
+    editMode = true;
+    currentDocId = result.id;
+    setFolioPanel(result.data.folio || cleaned);
+    message.textContent = "Modo edicion activado.";
+    message.className = "form-message success";
+    return;
+  }
+
+  editMode = false;
+  currentDocId = null;
+  message.textContent = "Datos cargados para reutilizar.";
+  message.className = "form-message success";
+};
+
 addExtraButton.addEventListener("click", () => {
   addExtra(extraSelect.value);
   extraSelect.value = "";
@@ -304,12 +475,36 @@ addCustomButton.addEventListener("click", () => {
   extraCustomInput.value = "";
 });
 
+copyFolioButton.addEventListener("click", async () => {
+  const folio = folioValue.textContent;
+  if (!folio || folio === "-") return;
+  try {
+    await navigator.clipboard.writeText(folio);
+    message.textContent = "Folio copiado.";
+    message.className = "form-message success";
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+editFolioButton.addEventListener("click", () => {
+  loadByFolio(folioInput.value, "edit");
+});
+
+reuseFolioButton.addEventListener("click", () => {
+  loadByFolio(folioInput.value, "reuse");
+});
+
 form.addEventListener("reset", () => {
   extrasState.clear();
   renderExtras();
   updateMaterialCount();
   message.textContent = "";
   syncInitials();
+  applyLevel(currentLevel);
+  setFolioPanel(null);
+  editMode = false;
+  currentDocId = null;
 });
 
 form.addEventListener("submit", async (event) => {
@@ -344,54 +539,79 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const data = {
-    asignatura: sanitizeText(formData.get("asignatura")),
-    proyecto: sanitizeText(formData.get("proyecto")),
-    fecha: sanitizeText(formData.get("fecha")),
-    grupo: sanitizeText(formData.get("grupo")),
-    profesor: sanitizeText(formData.get("profesor")),
-    mesa: sanitizeText(formData.get("mesa")),
-    kitId: sanitizeText(formData.get("kitId")),
-    integrantes: sanitizeText(formData.get("integrantes")),
-    responsable: {
-      nombre: sanitizeText(formData.get("responsableNombre")),
-      firma: sanitizeText(formData.get("responsableFirma")),
-    },
-    materiales: {
-      base: baseSelected.map((item) => ({
-        material: sanitizeText(item.material),
-        cantidad: item.cantidad,
-      })),
-      extras: extrasSelected.map((item) => ({
-        material: sanitizeText(item.material),
-        cantidad: item.cantidad,
-      })),
-    },
-    estado: {
-      recibir: sanitizeText(formData.get("recibirEstado")),
-      recibirObservaciones: sanitizeText(formData.get("recibirObservaciones")),
-      devolver: sanitizeText(formData.get("devolverEstado")),
-      devolverObservaciones: sanitizeText(formData.get("devolverObservaciones")),
-    },
-    observacionesFinales: sanitizeText(formData.get("observacionesFinales")),
-    compromiso: {
-      firmaAlumno: sanitizeText(formData.get("firmaAlumno")),
-    },
-    createdAt: serverTimestamp(),
-  };
-
   try {
-    await addDoc(collection(db, "prestamos"), data);
-    message.textContent = "Registro guardado en Firebase.";
-    message.className = "form-message success";
+    const baseData = {
+      asignatura: sanitizeText(formData.get("asignatura")),
+      proyecto: sanitizeText(formData.get("proyecto")),
+      fecha: sanitizeText(formData.get("fecha")),
+      grupo: sanitizeText(formData.get("grupo")),
+      profesor: sanitizeText(formData.get("profesor")),
+      mesa: sanitizeText(formData.get("mesa")),
+      kitId: sanitizeText(formData.get("kitId")),
+      integrantes: sanitizeText(formData.get("integrantes")),
+      seccion: currentLevel,
+      responsable: {
+        nombre: sanitizeText(formData.get("responsableNombre")),
+        firma: sanitizeText(formData.get("responsableFirma")),
+      },
+      materiales: {
+        base: baseSelected.map((item) => ({
+          material: sanitizeText(item.material),
+          cantidad: item.cantidad,
+        })),
+        extras: extrasSelected.map((item) => ({
+          material: sanitizeText(item.material),
+          cantidad: item.cantidad,
+        })),
+      },
+      estado: {
+        recibir: sanitizeText(formData.get("recibirEstado")),
+        recibirObservaciones: sanitizeText(formData.get("recibirObservaciones")),
+        devolver: sanitizeText(formData.get("devolverEstado")),
+        devolverObservaciones: sanitizeText(formData.get("devolverObservaciones")),
+      },
+      observacionesFinales: sanitizeText(formData.get("observacionesFinales")),
+      compromiso: {
+        firmaAlumno: sanitizeText(formData.get("firmaAlumno")),
+      },
+    };
+
+    let folio = currentFolio;
+
+    if (editMode && currentDocId) {
+      await updateDoc(doc(db, "prestamos", currentDocId), {
+        ...baseData,
+        updatedAt: serverTimestamp(),
+        updatedByEmail: auth.currentUser.email,
+      });
+      message.textContent = "Registro actualizado.";
+      message.className = "form-message success";
+      setFolioPanel(folio);
+    } else {
+      folio = generateFolio();
+      await addDoc(collection(db, "prestamos"), {
+        ...baseData,
+        folio,
+        createdAt: serverTimestamp(),
+        createdByEmail: auth.currentUser.email,
+        createdByUid: auth.currentUser.uid,
+      });
+      message.textContent = "Registro guardado en Firebase.";
+      message.className = "form-message success";
+      setFolioPanel(folio);
+    }
+
     const responsable = sanitizeText(formData.get("responsableNombre"));
     const kitId = sanitizeText(formData.get("kitId"));
     const fecha = formatDate(sanitizeText(formData.get("fecha")));
     const grupo = sanitizeText(formData.get("grupo"));
     alert(
-      `✅ Registro guardado\nResponsable: ${responsable}\nKit: ${kitId}\nFecha: ${fecha}\nGrupo: ${grupo}`
+      `✅ ${editMode ? "Registro actualizado" : "Registro guardado"}\nResponsable: ${responsable}\nKit: ${kitId}\nFecha: ${fecha}\nGrupo: ${grupo}\nFolio: ${folio || currentFolio || "-"}`
     );
+    editMode = false;
+    currentDocId = null;
     form.reset();
+    setFolioPanel(folio);
   } catch (error) {
     message.textContent = "No se pudo guardar el registro. Revisa la consola.";
     message.className = "form-message error";
